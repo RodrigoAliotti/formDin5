@@ -5,7 +5,7 @@ class TFormDinRichTextEditor extends TFormDinGenericField
     private $showCountChar;
     private $intMaxLength;
 
-    private THtmlEditor $adiantiObjRichEditor; //Somente obj Adianti Customizada
+    private $adiantiObjRichEditor; //Somente obj Adianti Customizada
     private $adiantiObjFull;  //obj Adianti completo com todos os elementos para fazer o memo
 
     /**
@@ -35,67 +35,65 @@ class TFormDinRichTextEditor extends TFormDinGenericField
                                $intColumns='100%',
                                $intRows='100%',
                                $boolNewLine=null,
-   		                       $boolLabelAbove=false,
+   		                         $boolLabelAbove=false,
                                $value=null,
                                $boolNoWrapLabel=null,
                                $placeholder=null,
                                $boolShowCountChar=false)
     {
-        TScript::importFromFile('app/lib/widget/FormDin5/javascript/FormDin5RichEditor.js?appver='.FormDinHelper::version());
-        $this->setAdiantiObjRichEditor($id);
-        parent::__construct($this->getAdiantiObjRichEditor(),$id,$label,$boolRequired,$value,$placeholder);
-        $this->setSize($intColumns, $intRows);
+
+        
+        $this->setAdiantiObjRichEditor($id,$placeholder);        
         $this->setMaxLength($label,$intMaxLength);       
 
-        $this->setAdiantiObjTFull($id,$boolShowCountChar,$intMaxLength);
+        $this->setAdiantiObjTFull($id,$boolShowCountChar,$intMaxLength,$placeholder,$intColumns, $intRows,$label,$boolRequired);
         
         return $this->getAdiantiObj();       
     }
 
-    public function setAdiantiObjRichEditor($id){
-        //$this->adiantiObjRichEditor = new TText($id);
-        $this->adiantiObjRichEditor = new THtmlEditor($id);              
+    public function setAdiantiObjRichEditor($id,$placeholder){   
+      
+      $this->adiantiObjRichEditor = new TElement("div");  
+      $this->adiantiObjRichEditor->setproperty('id',$id);
+      
+      if (empty($placeholder)){
+        return;
+      }        
+      $this->adiantiObjRichEditor->setproperty('placeholder',$placeholder);
     }
 
-    public function getAdiantiObjRichEditor(): THtmlEditor {
+    public function getAdiantiObjRichEditor(): TElement {
         return $this->adiantiObjRichEditor;
     }
 
-    private function setAdiantiObjTFull( $idField, $boolShowCountChar,$intMaxLength )
+    private function setAdiantiObjTFull( $idField, $boolShowCountChar,$intMaxLength,$placeholder,$intColumns, $intRows,$label,$boolRequired )
     {
-        $adiantiObjRichEditor = $this->getAdiantiObjRichEditor();                
-        $adiantiObj = null;
-        $div = new TElement('div');
-        $div->add($adiantiObjRichEditor);        
+      $div = new TElement('div');
+      $div->add($this->adiantiObjRichEditor);
+      $this->setSize($div,$intColumns, $intRows);
+      $div->show;
 
-        TScript::create( " setToolBarRichEditor('{$adiantiObjRichEditor->id}', [
-            ['style', ['bold', 'italic', 'underline', 'clear']],
-            ['font', ['strikethrough', 'superscript', 'subscript']],
-            ['fontsize', ['fontsize']],
-            ['color', ['color']],
-            ['para', ['ul', 'ol', 'paragraph']],
-            ['height', ['height']]
-          ]); " );
+      
+      $addLabel = "document.querySelector('#{$idField}+.note-editor>.panel-heading').innerHTML = '<label style=\"font-size: 14px;padding-right:4px";
+      if ($boolRequired){
+        $addLabel.=';color: red';
+      }
+      $addLabel.="\">{$label}</label>'+document.querySelector('#{$idField}+.note-editor>.panel-heading').innerHTML;";
+      
+      TScript::create(" $('#{$idField}').summernote({   
+        placeholder:'{$placeholder}',       
+        toolbar: [
+          ['style', ['bold', 'italic', 'underline', 'clear']],
+          ['font', ['strikethrough', 'superscript', 'subscript']],
+          ['fontsize', ['fontsize']],
+          ['color', ['color']],
+          ['para', ['ul', 'ol', 'paragraph']],
+          ['height', ['height']]
+        ]
+      });".$addLabel."document.querySelector('#{$idField}+.note-editor>.note-statusbar>.note-resizebar').style.display=\"none\";");
 
-        if( $boolShowCountChar && ($intMaxLength>=1) ){
-            $adiantiObjRichEditor->maxlength = $intMaxLength;
-            $adiantiObjRichEditor->setId($idField);            
-
-            $charsText  = new TElement('span');
-            $charsText->setProperty('id',$idField.'_counter');
-            $charsText->setProperty('name',$idField.'_counter');
-            $charsText->setProperty('class', 'tformdinmemo_counter');
-            $charsText->add('caracteres: 0 / '.$intMaxLength);
-
-              
-            $div->add($charsText);
-            $div->add($script);           
-           
-            
-        }
-        $adiantiObj = $div;
-               
-        $this->adiantiObjFull = $adiantiObj;
+      $this->adiantiObjFull = $div;
+        
     }
 
     public function getAdiantiObjFull(){
@@ -104,10 +102,10 @@ class TFormDinRichTextEditor extends TFormDinGenericField
 
     public function setMaxLength($label,$intMaxLength)
     {
-        $this->intMaxLength = (int) $intMaxLength;
-        if($intMaxLength>=1){
-            $this->getAdiantiObj()->addValidation($label, new TMaxLengthValidator, array($intMaxLength));
-        }
+      $this->intMaxLength = (int) $intMaxLength;
+      if($intMaxLength>=1){
+        $this->adiantiObjRichEditor->setProperty('maxlength', $intMaxLength);
+      }
     }
 
     public function getMaxLength()
@@ -115,15 +113,17 @@ class TFormDinRichTextEditor extends TFormDinGenericField
         return $this->intMaxLength;
     }
 
-    public function setSize($intColumns, $intRows)
+    private function setSize($element,$intColumns, $intRows)
     {
-        if(is_numeric($intRows)){
-            $intRows = $intRows * 4;
-        }else{
-            FormDinHelper::validateSizeWidthAndHeight($intRows,true);
-        }
-        $intColumns = FormDinHelper::sizeWidthInPercent($intColumns);
-        $this->getAdiantiObj()->setSize($intColumns, $intRows);
+      if(is_numeric($intRows)){
+          $intRows = $intRows * 4;
+      }else{
+          FormDinHelper::validateSizeWidthAndHeight($intRows,true);
+      }
+      $intColumns = FormDinHelper::sizeWidthInPercent($intColumns);
+
+      $element->setProperty('style',"width:{$intColumns},height:{$intRows}");
+          
     }
 
     public function setShowCountChar($showCountChar)
