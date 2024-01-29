@@ -35,7 +35,7 @@ class TFormDinRichTextEditor extends TFormDinGenericField
                                $intColumns='100%',
                                $intRows='100%',
                                $boolNewLine=null,
-   		                         $boolLabelAbove=false,
+   		                       $boolLabelAbove=false,
                                $value=null,
                                $boolNoWrapLabel=null,
                                $placeholder=null,
@@ -74,12 +74,20 @@ class TFormDinRichTextEditor extends TFormDinGenericField
       $div->show;
 
       
-      $addLabel = "document.querySelector('#{$idField}+.note-editor>.panel-heading').innerHTML = '<label style=\"font-size: 14px;padding-right:4px";
+      $addLabel = "document.querySelector('#{$idField}+.note-editor>.note-dropzone>.note-dropzone-message').innerHTML = '{$label}';";
+      $addLabel.= "document.querySelector('#{$idField}+.note-editor>.note-dropzone').style.display = 'block';";
+      $addLabel.= "document.querySelector('#{$idField}+.note-editor>.note-dropzone').style.backgroundColor = 'transparent';";
+      $addLabel.= "document.querySelector('#{$idField}+.note-editor>.note-dropzone>.note-dropzone-message').style.padding = '4px';";
+      $addLabel.= "document.querySelector('#{$idField}+.note-editor>.note-dropzone>.note-dropzone-message').style.fontSize = '14px';";
       if ($boolRequired){
-        $addLabel.=';color: red';
+        $addLabel.= "document.querySelector('#{$idField}+.note-editor>.note-dropzone>.note-dropzone-message').style.color = 'red';";
+      } else {
+        $addLabel.= "document.querySelector('#{$idField}+.note-editor>.note-dropzone>.note-dropzone-message').style.color = 'black';";
       }
-      $addLabel.="\">{$label}</label>'+document.querySelector('#{$idField}+.note-editor>.panel-heading').innerHTML;";
-      
+      $addLabel.="document.querySelector('#{$idField}+.note-editor>.panel-heading').style.paddingLeft=document.querySelector('#{$idField}+.note-editor>.note-dropzone>.note-dropzone-message').offsetWidth+'px';";
+      $addLabel.="document.querySelector('#{$idField}+.note-editor>.note-dropzone').style.minHeight=document.querySelector('#{$idField}+.note-editor>.panel-heading').style.offsetHeight+'px';";
+      $addLabel.="document.querySelector('#{$idField}+.note-editor>.note-dropzone').style.marginTop=window.getComputedStyle(document.querySelector('#{$idField}+.note-editor>.panel-heading>.btn-group')).marginTop;";
+
       TScript::create(" $('#{$idField}').summernote({   
         placeholder:'{$placeholder}',       
         toolbar: [
@@ -90,7 +98,8 @@ class TFormDinRichTextEditor extends TFormDinGenericField
           ['para', ['ul', 'ol', 'paragraph']],
           ['height', ['height']]
         ]
-      });".$addLabel."document.querySelector('#{$idField}+.note-editor>.note-statusbar>.note-resizebar').style.display=\"none\";");
+      });".$addLabel
+        ."document.querySelector('#{$idField}+.note-editor>.note-statusbar>.note-resizebar').style.display=\"none\";");
 
       $this->adiantiObjFull = $div;
         
