@@ -2,11 +2,15 @@
         
 class TFormDinRichTextEditor extends TFormDinGenericField
 {
-    private $showCountChar;
-    private $intMaxLength;
+  private $showCountChar;
+  private $intMaxLength;
+  private $boolLabelAbove;
+  
+  private $intColumns;
+  private $intRows;
 
-    private $adiantiObjRichEditor; //Somente obj Adianti Customizada
-    private $adiantiObjFull;  //obj Adianti completo com todos os elementos para fazer o memo
+  private $adiantiObjRichEditor; //Somente obj Adianti Customizada
+  private $adiantiObjFull;  //obj Adianti completo com todos os elementos para fazer o memo
 
     /**
      * Adicionar campo de entrada de dados de varias linhas (textareas)
@@ -28,85 +32,75 @@ class TFormDinRichTextEditor extends TFormDinGenericField
      * @param string $boolShowCountChar 10: FORMDIN5 Mostra o contador de caractes.  Default TRUE = mostra, FASE = não mostra
      * @return TFormDinRichTextEditor
      */
-    public function __construct($id,
-                               $label,
-                               $intMaxLength,
-                               $boolRequired=null,
+    public function __construct(string $id,
+                               string $label,
+                               $intMaxLength=0,
+                               $boolRequired=false,
                                $intColumns='100%',
                                $intRows='100%',
                                $boolNewLine=null,
-   		                       $boolLabelAbove=false,
+   		                         $boolLabelAbove = null,
                                $value=null,
                                $boolNoWrapLabel=null,
                                $placeholder=null,
                                $boolShowCountChar=false)
     {
-
         
-        $this->setAdiantiObjRichEditor($id,$placeholder);        
-        $this->setMaxLength($label,$intMaxLength);       
-
-        $this->setAdiantiObjTFull($id,$boolShowCountChar,$intMaxLength,$placeholder,$intColumns, $intRows,$label,$boolRequired);
-        
-        return $this->getAdiantiObj();       
+      $this->intColumns=$intColumns;
+      $this->intRows=$intRows;
+      $this->setAdiantiObjRichEditor($id);  
+      $this->labelTxt = trim(str_replace('  ',' ', $label));
+      $this->boolLabelAbove = (!empty($boolLabelAbove));
+      $this->setMaxLength($label,$intMaxLength);
+      $this->setAdiantiObjTFull($id,$boolShowCountChar,$intMaxLength,$placeholder,$boolRequired);
+      
+      return $this->getAdiantiObj();       
     }
 
-    public function setAdiantiObjRichEditor($id,$placeholder){   
-      
-      $this->adiantiObjRichEditor = new TElement("div");  
-      $this->adiantiObjRichEditor->setproperty('id',$id);
-      
-      if (empty($placeholder)){
-        return;
-      }        
-      $this->adiantiObjRichEditor->setproperty('placeholder',$placeholder);
+    public function setAdiantiObjRichEditor($id){         
+      $this->adiantiObjRichEditor = new TElement('div');  
+      $this->adiantiObjRichEditor->setproperty('id',$id);        
     }
 
     public function getAdiantiObjRichEditor(): TElement {
-        return $this->adiantiObjRichEditor;
+      return $this->adiantiObjRichEditor;
     }
 
-    private function setAdiantiObjTFull( $idField, $boolShowCountChar,$intMaxLength,$placeholder,$intColumns, $intRows,$label,$boolRequired )
+    private function setAdiantiObjTFull( $idField, $boolShowCountChar,$intMaxLength,$placeholder,$boolRequired )
     {
-      $div = new TElement('div');
-      $div->add($this->adiantiObjRichEditor);
-      $this->setSize($div,$intColumns, $intRows);
-      $div->show;
-
+      //$div = new TElement('div');
+      //$div->add($this->adiantiObjRichEditor);
+      //$this->setSize($div,$this->intColumns, $this->intRows);      
       
-      $addLabel = "document.querySelector('#{$idField}+.note-editor>.note-dropzone>.note-dropzone-message').innerHTML = '{$label}';";
-      $addLabel.= "document.querySelector('#{$idField}+.note-editor>.note-dropzone').style.display = 'block';";
-      $addLabel.= "document.querySelector('#{$idField}+.note-editor>.note-dropzone').style.backgroundColor = 'transparent';";
-      $addLabel.= "document.querySelector('#{$idField}+.note-editor>.note-dropzone>.note-dropzone-message').style.padding = '4px';";
-      $addLabel.= "document.querySelector('#{$idField}+.note-editor>.note-dropzone>.note-dropzone-message').style.fontSize = '14px';";
-      if ($boolRequired){
-        $addLabel.= "document.querySelector('#{$idField}+.note-editor>.note-dropzone>.note-dropzone-message').style.color = 'red';";
-      } else {
-        $addLabel.= "document.querySelector('#{$idField}+.note-editor>.note-dropzone>.note-dropzone-message').style.color = 'black';";
-      }
-      $addLabel.="document.querySelector('#{$idField}+.note-editor>.panel-heading').style.paddingLeft=document.querySelector('#{$idField}+.note-editor>.note-dropzone>.note-dropzone-message').offsetWidth+'px';";
-      $addLabel.="document.querySelector('#{$idField}+.note-editor>.note-dropzone').style.minHeight=document.querySelector('#{$idField}+.note-editor>.panel-heading').style.offsetHeight+'px';";
-      $addLabel.="document.querySelector('#{$idField}+.note-editor>.note-dropzone').style.marginTop=window.getComputedStyle(document.querySelector('#{$idField}+.note-editor>.panel-heading>.btn-group')).marginTop;";
+      $locale = !empty($ini['general']['locale']) ? $ini['general']['locale'] : 'pt-BR';
+      $options = [
+          'lang'=>$locale,
+          'required'=>($boolRequired===true),
+          'maxlength'=>$intMaxLength,
+          'width'=>$this->intColumns,
+          'placeholder'=>$placeholder,
+          'height'=>$this->intRows,
+          'maxHeight'=>$this->intRows,
+          'toolbar'=>[
+            ['style', ['bold', 'italic', 'underline', 'clear']],
+            ['font', ['strikethrough', 'superscript', 'subscript']],
+            ['fontsize', ['fontsize']],
+            ['color', ['color']],
+            ['para', ['ul', 'ol', 'paragraph']],
+            ['height', ['height']],
+            ['view', ['fullscreen']]
+          ]
+      ];
+      $options_json = json_encode($options);      
 
-      TScript::create(" $('#{$idField}').summernote({   
-        placeholder:'{$placeholder}',       
-        toolbar: [
-          ['style', ['bold', 'italic', 'underline', 'clear']],
-          ['font', ['strikethrough', 'superscript', 'subscript']],
-          ['fontsize', ['fontsize']],
-          ['color', ['color']],
-          ['para', ['ul', 'ol', 'paragraph']],
-          ['height', ['height']]
-        ]
-      });".$addLabel
-        ."document.querySelector('#{$idField}+.note-editor>.note-statusbar>.note-resizebar').style.display=\"none\";");
-
-      $this->adiantiObjFull = $div;
-        
+      $callFunctionJS = "prepareAndShowRichEditor('{$idField}','{$this->labelTxt}','{$options_json}');";
+      echo '<script>if (typeof prepareAndShowRichEditor == "undefined"){$.getScript("app/lib/widget/FormDin5/javascript/FormDin5RichEditor.js", function(){',$callFunctionJS,'});} else {',$callFunctionJS,'}</script>';
+            
+      $this->adiantiObjFull = $this->adiantiObjRichEditor;        
     }
 
     public function getAdiantiObjFull(){
-        return $this->adiantiObjFull;
+      return $this->adiantiObjFull;
     }
 
     public function setMaxLength($label,$intMaxLength)
@@ -119,30 +113,31 @@ class TFormDinRichTextEditor extends TFormDinGenericField
 
     public function getMaxLength()
     {
-        return $this->intMaxLength;
+      return $this->intMaxLength;
     }
 
     private function setSize($element,$intColumns, $intRows)
     {
       if(is_numeric($intRows)){
-          $intRows = $intRows * 4;
+        $intRows = $intRows * 4;
       }else{
-          FormDinHelper::validateSizeWidthAndHeight($intRows,true);
+        FormDinHelper::validateSizeWidthAndHeight($intRows,true);
       }
       $intColumns = FormDinHelper::sizeWidthInPercent($intColumns);
 
-      $element->setProperty('style',"width:{$intColumns},height:{$intRows}");
+      $element->setProperty('style',"width:{$intColumns};height:{$intRows};max-height:{$intRows};");
+      $element->setProperty('class','');
           
     }
 
     public function setShowCountChar($showCountChar)
     {
-        $this->showCountChar = $showCountChar;
+      $this->showCountChar = $showCountChar;
     }
 
     public function getShowCountChar()
     {
-        return $this->showCountChar;
+      return $this->showCountChar;
     }
 
 }
