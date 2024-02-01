@@ -1,40 +1,67 @@
-//-------------------------------------------------------------------------------------
-function fwCheckNumCharRickEditor(e,max)
-{
-	try {
-        var obj = fwGetObj(e.id+'_counter');
-		var texto = e.value.trim();
-		var tamanho = texto.length;
-		obj.style.color='#000000';
-		if( tamanho > max ){
-			fwRemoverCaractere(e,13);
-			texto = e.value.trim();
-			tamanho = texto.length;
-			if( tamanho > max ){
-				obj.style.color='red';
-				alert('Limite de '+max+' caracteres atingido!');
-				texto = texto.substr(0,max);
-				e.value=texto;
-				var dif = (tamanho-e.value.length);
-				if( dif > 1 ){
-					alert( 'Foram removidos '+dif+' caracteres do final do texto.')
-				}
-			}
-		}
-		obj.innerHTML='caracteres:'+e.value.length+"/"+max;
-	} catch(e)	{}
-}
-//--------------------------------------------------------------------------------------
-function setToolBarRichEditor(id,valueToolbar){
-	try {
-		if ((!id)||(!document.getElementById(id))){
-			return false;
-		}
-	} catch {
-		return false;
+//-------------------------------------------------------------------------
+function mountLabelRichEditor(id,label,required,above){
+	var caminho = '#'+id+'+.note-editor>';
+	document.querySelector(caminho+'.note-dropzone>.note-dropzone-message').innerHTML = label;
+	document.querySelector(caminho+'.note-dropzone').style.display = 'block';
+	document.querySelector(caminho+'.note-dropzone').style.backgroundColor = 'transparent';
+	document.querySelector(caminho+'.note-dropzone>.note-dropzone-message').style.padding = '4px';
+	document.querySelector(caminho+'.note-dropzone>.note-dropzone-message').style.fontSize = '14px';
+	if (!above){             
+		document.querySelector(caminho+'.panel-heading').style.paddingLeft=document.querySelector(caminho+'.note-dropzone>.note-dropzone-message').offsetWidth+'px';
+		document.querySelector(caminho+'.note-dropzone').style.minHeight=document.querySelector(caminho+'.panel-heading').style.offsetHeight+'px';
+		document.querySelector(caminho+'.note-dropzone').style.marginTop=window.getComputedStyle(document.querySelector(caminho+'.panel-heading>.btn-group')).marginTop;
+	} else {
+		document.querySelector(caminho+'.panel-heading').style.paddingTop='18px';
 	}
-	$('#'+id+'').summernote({
-		toolbar: valueToolbar
-	  });
-	return true;  
+	var colorLabel=(required)?'red':'black';
+	document.querySelector(caminho+'.note-dropzone>.note-dropzone-message').style.color = colorLabel;
+}
+
+//-------------------------------------------------------------------------
+function prepareAndShowRichEditor(id,label,options_json){
+	var options = JSON.parse(options_json);	
+	
+	if(!! options.maxlength && options.maxlength > 0) {
+        options.callbacks = {
+		onKeydown: function(e) {
+			var l = thtmleditor_get_length( $(e.currentTarget).html()) + 1;
+
+			if (l > options.maxlength) {
+				var allowedKeys = [8, 33, 34, 35, 36, 37, 38, 39, 40, 45, 46];
+				if (! allowedKeys.includes(e.keyCode))
+				e.preventDefault();
+			}
+		},
+		onKeyup: function(e) {
+			var l = thtmleditor_get_length( $(e.currentTarget).html());
+			$('#'+id).next('.note-editor').find('.counter').html(l+'/'+options.maxlength);
+		},
+		onPaste: function(e) {
+			e.preventDefault();
+		}
+		}
+    }
+
+	$('#'+id).summernote(options);
+
+	if (label){
+		mountLabelRichEditor(id,label,options.required,false);
+	}
+	//dont show bar to resize
+	document.querySelector('#'+id+'+.note-editor>.note-statusbar>.note-resizebar').style.display="none";
+	
+	if(!! options.maxlength && options.maxlength > 0) {
+        let content = $('#'+id).parent().find('.note-editable').html();
+        let length = thtmleditor_get_length(content);
+        $('#'+id).next('.note-editor').append(
+            '<small style="position:absolute;bottom:10px;right:4px;" class="counter">' + length + '/' + options.maxlength + '</small>'
+        );
+    }
+
+	if (typeof $('#'+id).next('.note-editor')[0] !== 'undefined')
+    {
+        var container = $('#'+id).next('.note-editor')[0];
+        $(container).css('margin', $('#'+id).css('margin'));
+    }
+	
 }
