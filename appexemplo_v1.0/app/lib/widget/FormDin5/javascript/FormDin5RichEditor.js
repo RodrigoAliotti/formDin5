@@ -36,8 +36,11 @@ function prepareAndShowRichEditor(id,label,options_json){
 			var l = thtmleditor_get_length( $(e.currentTarget).html());
 			$('#'+id).next('.note-editor').find('.counter').html(l+'/'+options.maxlength);
 		},
-		onPaste: function(e) {
-			e.preventDefault();
+		onPaste: function(e){
+			var l = thtmleditor_get_length( $(e.currentTarget).html());
+			if (l>options.maxlength){
+				e.preventDefault();
+			}
 		}
 		}
     }
