@@ -23,10 +23,11 @@ function prepareAndShowRichEditor(id,label,options_json){
 	
 	if(!! options.maxlength && options.maxlength > 0) {
         options.callbacks = {
-		onKeydown: function(e) {
+			onKeydown: function(e) {
 			var l = thtmleditor_get_length( $(e.currentTarget).html()) + 1;
 
-			if (l > options.maxlength) {
+			if ((l > options.maxlength)&&(!(e.ctrlKey && (e.key === 'c' || e.key === 'C')))
+			&&(!(e.ctrlKey && (e.key === 'x' || e.key === 'X')))) {
 				var allowedKeys = [8, 33, 34, 35, 36, 37, 38, 39, 40, 45, 46];
 				if (! allowedKeys.includes(e.keyCode))
 				e.preventDefault();
@@ -37,11 +38,11 @@ function prepareAndShowRichEditor(id,label,options_json){
 			$('#'+id).next('.note-editor').find('.counter').html(l+'/'+options.maxlength);
 		},
 		onPaste: function(e){
-			var l = thtmleditor_get_length( $(e.currentTarget).html());
-			if (l>options.maxlength){
-				e.preventDefault();
-			}
-		}
+		 	var l = thtmleditor_get_length( $(e.currentTarget).html());
+		 	if (l>options.maxlength){
+		 		e.preventDefault();
+		 	}
+		 }
 		}
     }
 
