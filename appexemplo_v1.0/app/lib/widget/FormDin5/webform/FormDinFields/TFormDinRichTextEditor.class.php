@@ -68,10 +68,14 @@ class TFormDinRichTextEditor extends TFormDinGenericField
 
     private function setAdiantiObjTFull( $idField, $boolShowCountChar,$intMaxLength,$placeholder,$boolRequired )
     {
-      //$div = new TElement('div');
-      //$div->add($this->adiantiObjRichEditor);
-      //$this->setSize($div,$this->intColumns, $this->intRows);      
-      
+      $div =new TElement('div');
+      if (!$this->boolLabelAbove){
+        $div->setProperty('style','display:flex;flex-direction: row;');
+      }
+      $objLabel =  new TLabel($this->labelTxt);
+      if ($boolRequired){
+        $objLabel->setFontColor('red');
+      }
       $locale = !empty($ini['general']['locale']) ? $ini['general']['locale'] : 'pt-BR';
       $options = [
           'lang'=>$locale,
@@ -93,10 +97,15 @@ class TFormDinRichTextEditor extends TFormDinGenericField
       ];
       $options_json = json_encode($options);      
 
-      $callFunctionJS = "prepareAndShowRichEditor('{$idField}','{$this->labelTxt}','{$options_json}');";
+      $callFunctionJS = "prepareAndShowRichEditor('{$idField}','','{$options_json}');";
       echo '<script>if (typeof prepareAndShowRichEditor == "undefined"){$.getScript("app/lib/widget/FormDin5/javascript/FormDin5RichEditor.js", function(){',$callFunctionJS,'});} else {',$callFunctionJS,'}</script>';
-            
-      $this->adiantiObjFull = $this->adiantiObjRichEditor;        
+      
+      $div->add($objLabel);
+      $div->add($this->adiantiObjRichEditor);
+      $div->show;  
+      $this->adiantiObjFull = $div;
+      //$this->adiantiObjFull = $this->adiantiObjRichEditor;
+        
     }
 
     public function getAdiantiObjFull(){
@@ -116,28 +125,9 @@ class TFormDinRichTextEditor extends TFormDinGenericField
       return $this->intMaxLength;
     }
 
-    private function setSize($element,$intColumns, $intRows)
-    {
-      if(is_numeric($intRows)){
-        $intRows = $intRows * 4;
-      }else{
-        FormDinHelper::validateSizeWidthAndHeight($intRows,true);
-      }
-      $intColumns = FormDinHelper::sizeWidthInPercent($intColumns);
-
-      $element->setProperty('style',"width:{$intColumns};height:{$intRows};max-height:{$intRows};");
-      $element->setProperty('class','');
-          
-    }
-
     public function setShowCountChar($showCountChar)
     {
       $this->showCountChar = $showCountChar;
-    }
-
-    public function getShowCountChar()
-    {
-      return $this->showCountChar;
     }
 
 }
